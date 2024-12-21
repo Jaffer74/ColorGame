@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Decode-The Color Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      min-height: 100vh;
+      background: #030712;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Premium animated background */
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 100% 100%, rgba(244, 63, 94, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.1) 0%, transparent 50%);
+      filter: blur(80px);
+      z-index: -1;
+      animation: backgroundPulse 8s ease-in-out infinite alternate;
+    }
+
+    @keyframes gradientFlow {
+      0% { transform: scale(1) rotate(0deg); }
+      100% { transform: scale(1.2) rotate(360deg); }
+    }
+
+    .game-container {
+      max-width: 1200px;
+      width: 90%;
+      padding: 2rem;
+    }
+
+    .game-title {
+      font-size: 3.5rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 2rem;
+      background: linear-gradient(135deg, #818cf8, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      position: relative;
+      letter-spacing: -0.03em;
+    }
+
+    .game-title::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, #818cf8, #f472b6, transparent);
+      border-radius: 2px;
+    }
+
+    .game-board {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      padding: 3rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2.5rem;
+      box-shadow: 
+        0 25px 40px rgba(0, 0, 0, 0.2),
+        inset 0 1px rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .game-board::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, 
+                  rgba(255, 255, 255, 0.1) 0%, 
+                  transparent 70%);
+      animation: boardGlow 8s linear infinite;
+    }
+
+    @keyframes boardGlow {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .game-board:hover::before {
+      opacity: 1;
+    }
+
+    .circle-row {
+      display: flex;
+      gap: 2.5rem;
+    }
+
+    .circle {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .circle::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 30% 30%, 
+                  rgba(255, 255, 255, 0.4) 0%, 
+                  transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .circle:hover {
+      transform: translateY(-5px);
+      box-shadow: 
+        0 15px 30px rgba(0, 0, 0, 0.25),
+        0 0 0 1px rgba(255, 255, 255, 0.2);
+    }
+
+    .circle:hover::before {
+      opacity: 1;
+    }
+
+    .palette {
+      display: flex;
+      gap: 2rem;
+      padding: 1.5rem 2.5rem;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .palette-color {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .palette-color::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, 
+                  rgba(255, 255, 255, 0.4) 0%, 
+                  transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .palette-color:hover {
+      transform: translateY(-5px) scale(1.1);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .palette-color:hover::before {
+      opacity: 1;
+    }
+
+    .palette-color.selected {
+      border-color: #fff;
+      transform: translateY(-5px) scale(1.1);
+      box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+    }
+
+    button {
+      background: linear-gradient(135deg, #818cf8, #f472b6);
+      color: white;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 1.2rem;
+      padding: 1.2rem 3rem;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+      );
+      animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+      100% { left: 100%; }
+    }
+
+    button:hover {
+      transform: translateY(-3px);
+      box-shadow: 
+        0 20px 40px rgba(129, 140, 248, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.2);
+    }
+
+    .feedback {
+      font-size: 1.3rem;
+      font-weight: 500;
+      text-align: center;
+      color: #94a3b8;
+      line-height: 1.8;
+      transition: all 0.3s;
+    }
+
+    .level-indicator {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 0.8rem 1.5rem;
+      border-radius: 999px;
+      font-size: 1rem;
+      color: #e2e8f0;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      background: rgba(17, 24, 39, 0.95);
+      backdrop-filter: blur(20px);
+      padding: 3rem;
+      border-radius: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+      display: none;
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1000;
+    }
+
+    .modal.active {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+
+    .modal p {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 2.5rem;
+      background: linear-gradient(135deg, #818cf8, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-align: center;
+    }
+    .rules-button {
+      position: fixed;
+      top: 2rem;
+      right: 2rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 0.7rem 1.5rem;
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: 'Space Grotesk', sans-serif;
+      color: #fff;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .rules-button:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .rules-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      background: rgba(17, 24, 39, 0.98);
+      backdrop-filter: blur(20px);
+      padding: 3rem;
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+      display: none;
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      max-width: 600px;
+      width: 90%;
+      z-index: 1000;
+    }
+
+    .rules-modal.active {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+
+    .rules-modal h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, #60a5fa, #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .rules-modal .rule-item {
+      margin-bottom: 1.5rem;
+      color: #94a3b8;
+      line-height: 1.6;
+    }
+
+    .rules-modal .rule-item strong {
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .close-rules {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.5rem;
+      transition: transform 0.3s ease;
+    }
+
+    .close-rules:hover {
+      transform: rotate(90deg);
+    }
+
+    @media (max-width: 768px) {
+      .game-title {
+        font-size: 2.5rem;
+      }
+
+      .game-board {
+        padding: 2rem;
+      }
+
+      .circle {
+        width: 60px;
+        height: 60px;
+      }
+
+      .palette-color {
+        width: 50px;
+        height: 50px;
+      }
+
+      .circle-row {
+        gap: 1.5rem;
+      }
+
+      .palette {
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+      }
+
+      button {
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+      }
+      .rules-button {
+        top: 1rem;
+        right: 1rem;
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+      }
+
+      .rules-modal {
+        padding: 2rem;
+      }
+
+      .rules-modal h2 {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+    <button class="rules-button" onclick="showRules()">How to Play</button>
+    <div class="rules-modal" id="rulesModal">
+        <button class="close-rules" onclick="hideRules()">×</button>
+        <h2>🎮 How to Play</h2>
+        
+        <div class="rule-item">
+            <strong>Objective:</strong> Crack the secret color code in limited moves. Each level presents a unique challenge with different combinations.
+        </div>
+        
+        <div class="rule-item">
+            <strong>Gameplay:</strong>
+            <ul style="list-style: none; padding-left: 0; margin-top: 0.5rem;">
+                <li>• Select colors from the palette below</li>
+                <li>• Click on the circles to fill them with your chosen color</li>
+                <li>• Submit your guess to receive feedback</li>
+                <li>• Use the feedback to adjust your next guess</li>
+            </ul>
+        </div>
+
+        <div class="rule-item">
+            <strong>Feedback Guide:</strong>
+            <ul style="list-style: none; padding-left: 0; margin-top: 0.5rem;">
+                <li>• 🎯 Perfect Matches: Right color in the right position</li>
+                <li>• 🔄 Correct Colors: Right color but wrong position</li>
+            </ul>
+        </div>
+
+        <div class="rule-item">
+            <strong>Progression:</strong> Complete each level within the move limit to advance. The game becomes more challenging as you progress, with more colors and positions to decode.
+        </div>
+    </div>
+  <div class="game-container">
+    <h1 class="game-title">Decode-the Colors Game</h1>
+    <div class="game-board">
+      <div class="level-indicator">Level <span id="currentLevelDisplay">1</span></div>
+      <div class="circle-row" id="circleRow"></div>
+      <div class="palette" id="palette"></div>
+      <button onclick="submitGuess()">Submit Guess</button>
+      <div class="feedback" id="feedback"></div>
+    </div>
+  </div>
+
+  <div id="winModal" class="modal">
+    <p>🎉 Brilliant! Level Complete!</p>
+    <button onclick="nextLevel()">Next Challenge</button>
+  </div>
+
+  <div id="loseModal" class="modal">
+    <p>✨ Nearly There!</p>
+    <button onclick="retryLevel()">Try Again</button>
+  </div>
+
+  <script>
+    const levels = [
+      { circles: 2, colors: ["#818cf8", "#f472b6", "#34d399"], moves: 5 },
+      { circles: 3, colors: ["#818cf8", "#f472b6", "#fbbf24", "#34d399", "#a78bfa", "#fb923c"], moves: 8 },
+      { circles: 4, colors: ["#818cf8", "#f472b6", "#fbbf24", "#34d399", "#a78bfa", "#fb923c", "#ec4899", "#92400e"], moves: 10 }
+    ];
+
+    let currentLevel = 0;
+    let movesLeft;
+    let correctSequence;
+    let selectedColor = null;
+
+    // Add mouse move effect for game board
+    document.querySelector('.game-board').addEventListener('mousemove', (e) => {
+      const rect = e.target.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      e.target.style.setProperty('--mouse-x', `${x}%`);
+      e.target.style.setProperty('--mouse-y', `${y}%`);
+    });
+
+    function initializeGame(level) {
+      const levelData = levels[level];
+      movesLeft = levelData.moves;
+      correctSequence = Array.from({ length: levelData.circles }, () =>
+        levelData.colors[Math.floor(Math.random() * levelData.colors.length)]
+      );
+
+      document.getElementById("currentLevelDisplay").textContent = level + 1;
+      renderCircles(levelData.circles);
+      renderPalette(levelData.colors);
+      updateFeedback();
+    }
+
+    function renderCircles(count) {
+      const circleRow = document.getElementById("circleRow");
+      circleRow.innerHTML = "";
+      for (let i = 0; i < count; i++) {
+        const circle = document.createElement("div");
+        circle.className = "circle";
+        circle.dataset.index = i;
+        circle.addEventListener("click", () => pickColor(circle));
+        circleRow.appendChild(circle);
+      }
+    }
+
+    function renderPalette(colors) {
+      const palette = document.getElementById("palette");
+      palette.innerHTML = "";
+      colors.forEach(color => {
+        const paletteColor = document.createElement("div");
+        paletteColor.className = "palette-color";
+        paletteColor.style.backgroundColor = color;
+        paletteColor.dataset.color = color;
+        paletteColor.addEventListener("click", () => selectColor(color));
+        palette.appendChild(paletteColor);
+      });
+    }
+
+    function selectColor(color) {
+      selectedColor = color;
+      document.querySelectorAll('.palette-color').forEach(el => {
+        el.classList.remove('selected');
+        el.style.boxShadow = 'none';
+      });
+      const selectedPaletteColor = Array.from(document.querySelectorAll('.palette-color'))
+        .find(el => el.dataset.color === color);
+      selectedPaletteColor.classList.add('selected');
+      selectedPaletteColor.style.boxShadow = `0 0 30px ${color}`;
+    }
+
+    function pickColor(circle) {
+      if (selectedColor) {
+        // Add pop animation
+        circle.style.transform = 'scale(0.8)';
+        circle.style.backgroundColor = selectedColor;
+        circle.dataset.color = selectedColor;
+        
+        // Create ripple effect
+        const ripple = document.createElement('div');
+        ripple.style.position = 'absolute';
+        ripple.style.width = '100%';
+        ripple.style.height = '100%';
+        ripple.style.backgroundColor = selectedColor;
+        ripple.style.borderRadius = '50%';
+        ripple.style.opacity = '0.4';
+        ripple.style.transform = 'scale(0)';
+        circle.appendChild(ripple);
+
+        // Animate ripple
+        ripple.animate([
+          { transform: 'scale(0)', opacity: '0.4' },
+          { transform: 'scale(2)', opacity: '0' }
+        ], {
+          duration: 600,
+          easing: 'cubic-bezier(0.4, 0, 0.2, 1)'
+        }).onfinish = () => ripple.remove();
+
+        // Reset circle scale with smooth animation
+        setTimeout(() => {
+          circle.style.transform = 'scale(1)';
+        }, 150);
+      }
+    }
+
+    function updateFeedback() {
+      const feedback = document.getElementById("feedback");
+      feedback.style.opacity = '0';
+      setTimeout(() => {
+        feedback.innerHTML = `
+          <div>Moves Remaining: ${movesLeft}</div>
+        `;
+        feedback.style.opacity = '1';
+      }, 300);
+    }
+
+    function submitGuess() {
+      const guesses = Array.from(document.querySelectorAll('.circle'))
+        .map(circle => circle.dataset.color || null);
+
+      if (guesses.includes(null)) {
+        const feedback = document.getElementById("feedback");
+        feedback.style.opacity = '0';
+        setTimeout(() => {
+          feedback.innerHTML = "Fill all circles before submitting";
+          feedback.style.color = "#ef4444";
+          feedback.style.opacity = '1';
+        }, 300);
+        
+        // Shake animation for empty circles
+        document.querySelectorAll('.circle').forEach(circle => {
+          if (!circle.dataset.color) {
+            circle.animate([
+              { transform: 'translateX(-5px)' },
+              { transform: 'translateX(5px)' },
+              { transform: 'translateX(-5px)' },
+              { transform: 'translateX(5px)' },
+              { transform: 'translateX(0)' }
+            ], {
+              duration: 400,
+              easing: 'cubic-bezier(0.36, 0, 0.66, -0.56)'
+            });
+          }
+        });
+
+        setTimeout(() => {
+          updateFeedback();
+        }, 2000);
+        return;
+      }
+
+      movesLeft--;
+
+      let correctColorAndPosition = 0;
+      let correctColorOnly = 0;
+
+      const tempCorrectSequence = [...correctSequence];
+      const tempGuesses = [...guesses];
+
+      // Check for correct color and position
+      tempGuesses.forEach((guess, index) => {
+        if (guess === tempCorrectSequence[index]) {
+          correctColorAndPosition++;
+          tempCorrectSequence[index] = null;
+          tempGuesses[index] = null;
+        }
+      });
+
+      // Check for correct color only
+      tempGuesses.forEach((guess, index) => {
+        if (guess && tempCorrectSequence.includes(guess)) {
+          correctColorOnly++;
+          tempCorrectSequence[tempCorrectSequence.indexOf(guess)] = null;
+        }
+      });
+
+      // Update feedback with animations
+      const feedback = document.getElementById("feedback");
+      feedback.style.opacity = '0';
+      setTimeout(() => {
+        feedback.innerHTML = `
+          <div>Moves Remaining: ${movesLeft}</div>
+          <div style="margin-top: 1rem;">
+            <div style="color: #34d399; margin: 0.5rem 0;">🎯 Perfect Matches: ${correctColorAndPosition}</div>
+            <div style="color: #fbbf24">🔄 Correct Colors: ${correctColorOnly}</div>
+          </div>
+        `;
+        feedback.style.opacity = '1';
+      }, 300);
+
+      // Add pulse animation to circles
+      document.querySelectorAll('.circle').forEach(circle => {
+        circle.animate([
+          { transform: 'scale(1)' },
+          { transform: 'scale(1.1)' },
+          { transform: 'scale(1)' }
+        ], {
+          duration: 400,
+          easing: 'cubic-bezier(0.4, 0, 0.2, 1)'
+        });
+      });
+
+      // Check win/lose conditions
+      if (correctColorAndPosition === correctSequence.length) {
+        setTimeout(() => showModal("winModal"), 800);
+        return;
+      }
+
+      if (movesLeft <= 0) {
+        setTimeout(() => showModal("loseModal"), 800);
+        return;
+      }
+    }
+
+    function showModal(modalId) {
+      const modal = document.getElementById(modalId);
+      modal.style.display = "block";
+      requestAnimationFrame(() => {
+        modal.classList.add("active");
+      });
+    }
+
+    function hideModal(modalId) {
+      const modal = document.getElementById(modalId);
+      modal.classList.remove("active");
+      setTimeout(() => {
+        modal.style.display = "none";
+      }, 400);
+    }
+
+    function nextLevel() {
+      hideModal("winModal");
+      // Add level transition animation to game board
+      const gameBoard = document.querySelector('.game-board');
+      gameBoard.style.opacity = '0';
+      gameBoard.style.transform = 'scale(0.95)';
+      
+      setTimeout(() => {
+        currentLevel++;
+        if (currentLevel >= levels.length) {
+          // Show completion animation
+          const feedback = document.getElementById("feedback");
+          feedback.innerHTML = `
+            <div style="color: #34d399; font-size: 1.5rem; margin: 2rem 0;">
+              🎉 Congratulations! You've mastered all levels! 🎉
+            </div>
+          `;
+          currentLevel = 0;
+        }
+        initializeGame(currentLevel);
+        gameBoard.style.opacity = '1';
+        gameBoard.style.transform = 'scale(1)';
+      }, 400);
+    }
+
+    function retryLevel() {
+      hideModal("loseModal");
+      // Add retry transition animation
+      const gameBoard = document.querySelector('.game-board');
+      gameBoard.style.opacity = '0';
+      gameBoard.style.transform = 'scale(0.95)';
+      
+      setTimeout(() => {
+        initializeGame(currentLevel);
+        gameBoard.style.opacity = '1';
+        gameBoard.style.transform = 'scale(1)';
+      }, 400);
+    }
+
+    function showRules() {
+        const rulesModal = document.getElementById("rulesModal");
+        rulesModal.style.display = "block";
+        setTimeout(() => {
+            rulesModal.classList.add("active");
+        }, 10);
+    }
+
+    function hideRules() {
+        const rulesModal = document.getElementById("rulesModal");
+        rulesModal.classList.remove("active");
+        setTimeout(() => {
+            rulesModal.style.display = "none";
+        }, 300);
+    }
+
+    // Add keyboard support
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        submitGuess();
+      }
+    });
+
+    // Initialize the game
+    initializeGame(currentLevel);
+  </script>
+</body>
+</html>
